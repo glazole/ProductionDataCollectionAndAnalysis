@@ -25,12 +25,12 @@
 6. **node-red-compose.yml**:
    - Конфигурация Docker Compose для запуска Node-RED.
 
-7. **dump_DB_mysql&postgre.zip**:
+7. **Архив дампов БД - dump_DB_mysql&postgre.zip**:
    - Полный дамп БД MySQL + PostgreSQL (структура и данные):
      - MySQL - данные из OPC UA
      - PostgreSQL - данные из ids3 и ids5
        
-8. **Файлы потоков Node-RED**
+8. **Файлы потоков Node-RED**:
    - flows_opc_ua.json - Поток OPC UA
    - flows_mqtt.json - Поток MQTT
   
