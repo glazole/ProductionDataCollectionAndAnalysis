@@ -29,11 +29,15 @@
    - Полный дамп БД MySQL + PostgreSQL (структура и данные):
      - MySQL - данные из OPC UA
      - PostgreSQL - данные из ids3 и ids5
+       
+8. **Файлы потоков Node-RED**
+   - flows_opc_ua.json - Поток OPC UA
+   - flows_mqtt.json - Поток MQTT
   
-8. **Дашборды из Superset**:
+10. **Дашборды из Superset**:
    - ids3.pdf
    - ids5.pdf
    - opc_ua.pdf
 
-9. **Дашборды из Node-RED**:
+11. **Дашборды из Node-RED**:
     - в презентации - ссылка вначале.
