@@ -1,0 +1,1210 @@
+[
+    {
+        "id": "305a4382c9decb68",
+        "type": "tab",
+        "label": "OPC UA",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "86bf9741fd710cb8",
+        "type": "inject",
+        "z": "305a4382c9decb68",
+        "name": "posX",
+        "props": [
+            {
+                "p": "action",
+                "v": "read",
+                "vt": "str"
+            },
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 90,
+        "y": 680,
+        "wires": [
+            [
+                "11f9cbbdb144fe38",
+                "b75a78663a4f995b",
+                "8c242c31eaac992b",
+                "03cc31eb97747977",
+                "675d8c19e98c90b4",
+                "829161b0704d5eaf",
+                "8a1244ba851db824"
+            ]
+        ],
+        "info": "{\r\n  \"action\": \"read\",\r\n  \"nodeId\": \"ns=2;s=Dynamic/RandomInt\"\r\n}\r\n"
+    },
+    {
+        "id": "73ebb631a5415de4",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 640,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "fd95d324a1cfbdf0",
+        "type": "OpcUa-Client",
+        "z": "305a4382c9decb68",
+        "endpoint": "adc03d7f1901b2a8",
+        "action": "read",
+        "deadbandtype": "a",
+        "deadbandvalue": 1,
+        "time": "25",
+        "timeUnit": "ms",
+        "certificate": "n",
+        "localfile": "",
+        "localkeyfile": "",
+        "securitymode": "None",
+        "securitypolicy": "None",
+        "useTransport": false,
+        "maxChunkCount": 1,
+        "maxMessageSize": 8192,
+        "receiveBufferSize": 8192,
+        "sendBufferSize": 8192,
+        "name": "",
+        "x": 500,
+        "y": 600,
+        "wires": [
+            [
+                "73ebb631a5415de4",
+                "3d17548c490393a6",
+                "c11c2c2d9d1d701e"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "8a1244ba851db824",
+        "type": "OpcUa-Item",
+        "z": "305a4382c9decb68",
+        "item": "ns=2;i=11182",
+        "datatype": "Double",
+        "value": "",
+        "name": "",
+        "x": 300,
+        "y": 600,
+        "wires": [
+            [
+                "fd95d324a1cfbdf0"
+            ]
+        ]
+    },
+    {
+        "id": "3d17548c490393a6",
+        "type": "ui_chart",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "group": "91d8d6a8fa91ea7f",
+        "order": 2,
+        "width": "7",
+        "height": "5",
+        "label": "Int16Value",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "-100",
+        "ymax": "100",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": true,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 650,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "118a7a490402dbba",
+        "type": "function",
+        "z": "305a4382c9decb68",
+        "name": "function 1",
+        "func": "// Проверяем наличие данных\nif (!msg.topic || typeof msg.payload === \"undefined\") {\n    node.error(\"msg.topic (NodeId) или msg.payload (значение) отсутствуют\");\n    return null;\n}\n\n// Сохраняем оригинальный node_id (текущий msg.topic)\nlet nodeId = msg.topic;\n\n// Преобразуем msg.payload в число\nlet value = parseFloat(msg.payload);\nif (isNaN(value)) {\n    node.error(\"msg.payload не является числом\");\n    return null;\n}\n\n// Список разрешенных node_id\nconst allowedTopics = [\"ns=2;i=11242\", \"ns=2;i=11176\", \"ns=2;i=11182\", \"ns=2;i=11224\", \"ns=2;i=11212\", \"ns=2;i=11218\"];\nif (!allowedTopics.includes(nodeId)) {\n    node.error(`Неизвестный node_id: ${nodeId}`);\n    return null;\n}\n\n// Логируем входящие данные\nnode.warn(`Обрабатываем данные. node_id: ${nodeId}, Значение: ${value}`);\n\n// SQL-запрос (msg.topic используется только для запроса)\nmsg.topic = \"INSERT INTO sensor_data (node_id, value, timestamp) VALUES (?, ?, CURRENT_TIMESTAMP)\";\n\n// Формируем параметры для MySQL\nmsg.payload = [nodeId, value]; // Используем оригинальный node_id, а не SQL-запрос\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1280,
+        "y": 740,
+        "wires": [
+            [
+                "d7f0465c0c8eb92e",
+                "da84b1d5e6871b30",
+                "23af0925770b9f4b"
+            ]
+        ]
+    },
+    {
+        "id": "d7f0465c0c8eb92e",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 1640,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "da84b1d5e6871b30",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "topic",
+        "statusType": "auto",
+        "x": 1640,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "23af0925770b9f4b",
+        "type": "mysql",
+        "z": "305a4382c9decb68",
+        "mydb": "6327dadd3a6899df",
+        "name": "opcua",
+        "x": 1530,
+        "y": 640,
+        "wires": [
+            [
+                "31652bbf0a7d49c6",
+                "ec862266a28fb6ae"
+            ]
+        ]
+    },
+    {
+        "id": "31652bbf0a7d49c6",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 9",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 1700,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "11f9cbbdb144fe38",
+        "type": "OpcUa-Item",
+        "z": "305a4382c9decb68",
+        "item": "ns=2;i=11176",
+        "datatype": "Double",
+        "value": "",
+        "name": "",
+        "x": 300,
+        "y": 780,
+        "wires": [
+            [
+                "905a6fcdd7f9e85b"
+            ]
+        ]
+    },
+    {
+        "id": "905a6fcdd7f9e85b",
+        "type": "OpcUa-Client",
+        "z": "305a4382c9decb68",
+        "endpoint": "adc03d7f1901b2a8",
+        "action": "read",
+        "deadbandtype": "a",
+        "deadbandvalue": 1,
+        "time": "25",
+        "timeUnit": "ms",
+        "certificate": "n",
+        "localfile": "",
+        "localkeyfile": "",
+        "securitymode": "None",
+        "securitypolicy": "None",
+        "useTransport": false,
+        "maxChunkCount": 1,
+        "maxMessageSize": 8192,
+        "receiveBufferSize": 8192,
+        "sendBufferSize": 8192,
+        "name": "",
+        "x": 500,
+        "y": 780,
+        "wires": [
+            [
+                "bbd9c956bb2b9f94",
+                "1fa46884b0c82225",
+                "aa7ee02ee7adafb2"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "bbd9c956bb2b9f94",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 11",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 640,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "1fa46884b0c82225",
+        "type": "ui_chart",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "group": "f2c0fac9f06a285f",
+        "order": 2,
+        "width": "7",
+        "height": "6",
+        "label": "ByteValue",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "300",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": true,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 640,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b75a78663a4f995b",
+        "type": "OpcUa-Item",
+        "z": "305a4382c9decb68",
+        "item": "ns=2;i=11242",
+        "datatype": "Double",
+        "value": "",
+        "name": "",
+        "x": 300,
+        "y": 980,
+        "wires": [
+            [
+                "2badf177f58cb4a0"
+            ]
+        ]
+    },
+    {
+        "id": "2badf177f58cb4a0",
+        "type": "OpcUa-Client",
+        "z": "305a4382c9decb68",
+        "endpoint": "adc03d7f1901b2a8",
+        "action": "read",
+        "deadbandtype": "a",
+        "deadbandvalue": 1,
+        "time": "25",
+        "timeUnit": "ms",
+        "certificate": "n",
+        "localfile": "",
+        "localkeyfile": "",
+        "securitymode": "None",
+        "securitypolicy": "None",
+        "useTransport": false,
+        "maxChunkCount": 1,
+        "maxMessageSize": 8192,
+        "receiveBufferSize": 8192,
+        "sendBufferSize": 8192,
+        "name": "",
+        "x": 500,
+        "y": 980,
+        "wires": [
+            [
+                "105836390ca8a355",
+                "c8d2bd48334f8c7d",
+                "3c1dde9bdfb516c8"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "105836390ca8a355",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 12",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 640,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "8c242c31eaac992b",
+        "type": "OpcUa-Item",
+        "z": "305a4382c9decb68",
+        "item": "ns=2;i=11224",
+        "datatype": "Double",
+        "value": "",
+        "name": "",
+        "x": 300,
+        "y": 420,
+        "wires": [
+            [
+                "0b814ec4a2987970"
+            ]
+        ]
+    },
+    {
+        "id": "0b814ec4a2987970",
+        "type": "OpcUa-Client",
+        "z": "305a4382c9decb68",
+        "endpoint": "adc03d7f1901b2a8",
+        "action": "read",
+        "deadbandtype": "a",
+        "deadbandvalue": 1,
+        "time": "25",
+        "timeUnit": "ms",
+        "certificate": "n",
+        "localfile": "",
+        "localkeyfile": "",
+        "securitymode": "None",
+        "securitypolicy": "None",
+        "useTransport": false,
+        "maxChunkCount": 1,
+        "maxMessageSize": 8192,
+        "receiveBufferSize": 8192,
+        "sendBufferSize": 8192,
+        "name": "",
+        "x": 500,
+        "y": 420,
+        "wires": [
+            [
+                "734c38c3ec8d2c84",
+                "b923dbd0117869ac",
+                "30c3dc462dad0218"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "30c3dc462dad0218",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 13",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 640,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "734c38c3ec8d2c84",
+        "type": "ui_chart",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "group": "91d8d6a8fa91ea7f",
+        "order": 3,
+        "width": "7",
+        "height": "5",
+        "label": "DoubleValue",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "-150",
+        "ymax": "150",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": true,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 650,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c8d2bd48334f8c7d",
+        "type": "ui_gauge",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "group": "f2c0fac9f06a285f",
+        "order": 1,
+        "width": "7",
+        "height": "6",
+        "gtype": "gage",
+        "title": "UIntegerValue",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "300",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 660,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "03cc31eb97747977",
+        "type": "OpcUa-Item",
+        "z": "305a4382c9decb68",
+        "item": "ns=2;i=11114",
+        "datatype": "Double",
+        "value": "",
+        "name": "",
+        "x": 300,
+        "y": 1180,
+        "wires": [
+            [
+                "5e2a7403a46725ab"
+            ]
+        ]
+    },
+    {
+        "id": "5e2a7403a46725ab",
+        "type": "OpcUa-Client",
+        "z": "305a4382c9decb68",
+        "endpoint": "adc03d7f1901b2a8",
+        "action": "read",
+        "deadbandtype": "a",
+        "deadbandvalue": 1,
+        "time": "25",
+        "timeUnit": "ms",
+        "certificate": "n",
+        "localfile": "",
+        "localkeyfile": "",
+        "securitymode": "None",
+        "securitypolicy": "None",
+        "useTransport": false,
+        "maxChunkCount": 1,
+        "maxMessageSize": 8192,
+        "receiveBufferSize": 8192,
+        "sendBufferSize": 8192,
+        "name": "",
+        "x": 500,
+        "y": 1180,
+        "wires": [
+            [
+                "77d6bbb8de1b587b",
+                "e5c4c518cb801226"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "e5c4c518cb801226",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 14",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 640,
+        "y": 1240,
+        "wires": []
+    },
+    {
+        "id": "77d6bbb8de1b587b",
+        "type": "ui_text",
+        "z": "305a4382c9decb68",
+        "group": "91d8d6a8fa91ea7f",
+        "order": 1,
+        "width": "7",
+        "height": "2",
+        "name": "",
+        "label": "SimulationActive",
+        "format": "{{msg.payload}}",
+        "layout": "row-center",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 670,
+        "y": 1120,
+        "wires": []
+    },
+    {
+        "id": "3c1dde9bdfb516c8",
+        "type": "change",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "ns=2;i=11242",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 780,
+        "y": 980,
+        "wires": [
+            [
+                "118a7a490402dbba",
+                "6f3011f1afecfc6f",
+                "7e4f72b2a3dd3f86"
+            ]
+        ]
+    },
+    {
+        "id": "6f3011f1afecfc6f",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 15",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 940,
+        "y": 1100,
+        "wires": []
+    },
+    {
+        "id": "7e4f72b2a3dd3f86",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 16",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 980,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "aa7ee02ee7adafb2",
+        "type": "change",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "ns=2;i=11176",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 740,
+        "y": 780,
+        "wires": [
+            [
+                "118a7a490402dbba",
+                "e8cc0fe0978cde3c"
+            ]
+        ]
+    },
+    {
+        "id": "b923dbd0117869ac",
+        "type": "change",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "ns=2;i=11224",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 440,
+        "wires": [
+            [
+                "118a7a490402dbba",
+                "d5abfe4deb2cd71f"
+            ]
+        ]
+    },
+    {
+        "id": "c11c2c2d9d1d701e",
+        "type": "change",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "ns=2;i=11182",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 740,
+        "y": 600,
+        "wires": [
+            [
+                "118a7a490402dbba",
+                "46f812169dbd855a"
+            ]
+        ]
+    },
+    {
+        "id": "d5abfe4deb2cd71f",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 17",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 980,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "46f812169dbd855a",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 18",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 880,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "e8cc0fe0978cde3c",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 19",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 840,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "675d8c19e98c90b4",
+        "type": "OpcUa-Item",
+        "z": "305a4382c9decb68",
+        "item": "ns=2;i=11218",
+        "datatype": "Double",
+        "value": "",
+        "name": "",
+        "x": 300,
+        "y": 240,
+        "wires": [
+            [
+                "38332bdd58db1abd"
+            ]
+        ]
+    },
+    {
+        "id": "38332bdd58db1abd",
+        "type": "OpcUa-Client",
+        "z": "305a4382c9decb68",
+        "endpoint": "adc03d7f1901b2a8",
+        "action": "read",
+        "deadbandtype": "a",
+        "deadbandvalue": 1,
+        "time": "25",
+        "timeUnit": "ms",
+        "certificate": "n",
+        "localfile": "",
+        "localkeyfile": "",
+        "securitymode": "None",
+        "securitypolicy": "None",
+        "useTransport": false,
+        "maxChunkCount": 1,
+        "maxMessageSize": 8192,
+        "receiveBufferSize": 8192,
+        "sendBufferSize": 8192,
+        "name": "",
+        "x": 500,
+        "y": 240,
+        "wires": [
+            [
+                "c2371b16110add51",
+                "d1a7fa3f9d02b860",
+                "850fd31d5e388a4b"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "850fd31d5e388a4b",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 20",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 640,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "c2371b16110add51",
+        "type": "ui_chart",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "group": "91d8d6a8fa91ea7f",
+        "order": 3,
+        "width": "7",
+        "height": "6",
+        "label": "FloatValue",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "-100",
+        "ymax": "100",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": true,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 650,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d1a7fa3f9d02b860",
+        "type": "change",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "ns=2;i=11218",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 260,
+        "wires": [
+            [
+                "65530563f78d8c5a",
+                "118a7a490402dbba"
+            ]
+        ]
+    },
+    {
+        "id": "65530563f78d8c5a",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 21",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 980,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "829161b0704d5eaf",
+        "type": "OpcUa-Item",
+        "z": "305a4382c9decb68",
+        "item": "ns=2;i=11200",
+        "datatype": "Double",
+        "value": "",
+        "name": "",
+        "x": 300,
+        "y": 1360,
+        "wires": [
+            [
+                "4c33609add361523"
+            ]
+        ]
+    },
+    {
+        "id": "4c33609add361523",
+        "type": "OpcUa-Client",
+        "z": "305a4382c9decb68",
+        "endpoint": "adc03d7f1901b2a8",
+        "action": "read",
+        "deadbandtype": "a",
+        "deadbandvalue": 1,
+        "time": "25",
+        "timeUnit": "ms",
+        "certificate": "n",
+        "localfile": "",
+        "localkeyfile": "",
+        "securitymode": "None",
+        "securitypolicy": "None",
+        "useTransport": false,
+        "maxChunkCount": 1,
+        "maxMessageSize": 8192,
+        "receiveBufferSize": 8192,
+        "sendBufferSize": 8192,
+        "name": "",
+        "x": 500,
+        "y": 1360,
+        "wires": [
+            [
+                "97f0157fd21d69a5",
+                "0d1227c3b95d040c",
+                "de3449259fc25c86"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "0d1227c3b95d040c",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 22",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 640,
+        "y": 1420,
+        "wires": []
+    },
+    {
+        "id": "97f0157fd21d69a5",
+        "type": "change",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "ns=2;i=11212",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 1380,
+        "wires": [
+            [
+                "ce865074016e85dc",
+                "118a7a490402dbba"
+            ]
+        ]
+    },
+    {
+        "id": "ce865074016e85dc",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 23",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 980,
+        "y": 1300,
+        "wires": []
+    },
+    {
+        "id": "de3449259fc25c86",
+        "type": "ui_gauge",
+        "z": "305a4382c9decb68",
+        "name": "",
+        "group": "f2c0fac9f06a285f",
+        "order": 2,
+        "width": "7",
+        "height": "6",
+        "gtype": "gage",
+        "title": "UInt64Value",
+        "label": "units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "300",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 650,
+        "y": 1300,
+        "wires": []
+    },
+    {
+        "id": "ec862266a28fb6ae",
+        "type": "debug",
+        "z": "305a4382c9decb68",
+        "name": "debug 24",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 1700,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "adc03d7f1901b2a8",
+        "type": "OpcUa-Endpoint",
+        "endpoint": "opc.tcp://opcua.demo-this.com:51210/UA/SampleServer",
+        "secpol": "None",
+        "secmode": "None",
+        "none": true,
+        "login": false,
+        "usercert": false,
+        "usercertificate": "",
+        "userprivatekey": ""
+    },
+    {
+        "id": "91d8d6a8fa91ea7f",
+        "type": "ui_group",
+        "name": "OPC 1",
+        "tab": "1ce55180789c1a3b",
+        "order": 1,
+        "disp": true,
+        "width": "7",
+        "collapse": true,
+        "className": ""
+    },
+    {
+        "id": "6327dadd3a6899df",
+        "type": "MySQLdatabase",
+        "name": "opcua",
+        "host": "51.250.33.137",
+        "port": "3306",
+        "db": "opcua",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "f2c0fac9f06a285f",
+        "type": "ui_group",
+        "name": "OPC 2",
+        "tab": "1ce55180789c1a3b",
+        "order": 2,
+        "disp": true,
+        "width": "7",
+        "collapse": true,
+        "className": ""
+    },
+    {
+        "id": "1ce55180789c1a3b",
+        "type": "ui_tab",
+        "name": "OPC UA",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
