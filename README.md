@@ -26,7 +26,9 @@
    - Конфигурация Docker Compose для запуска Node-RED.
 
 7. **dump_DB_mysql&postgre.zip**:
-   - Полный дамп БД MySQL + PostgreSQL (структура и данные).
+   - Полный дамп БД MySQL + PostgreSQL (структура и данные):
+     - MySQL - данные из OPC UA
+     - PostgreSQL - данные из ids3 и ids5
   
 8. **Дашборды из Superset**:
    - ids3.pdf
