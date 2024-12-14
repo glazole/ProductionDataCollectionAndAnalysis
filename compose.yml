@@ -1,0 +1,13 @@
+services:
+  node-red:
+    image: nodered/node-red
+    user: "0:0" # root
+    environment:
+      - TZ=Europe/Moscow
+    ports:
+      - "11880:1880"
+    volumes:
+      - "./node-red/data:/data"
+    restart: always
+    command: >
+      sh -c "chown -R 1000:1000 /data && node-red"
