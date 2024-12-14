@@ -22,3 +22,6 @@
 
 6. **node-red-compose.yml**:
    - Конфигурация Docker Compose для запуска Node-RED.
+
+7. **sensor_data.zip**:
+   - Полный дамп БД (структура и данные).
