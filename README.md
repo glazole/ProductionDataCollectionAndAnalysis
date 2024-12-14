@@ -25,8 +25,8 @@
 6. **node-red-compose.yml**:
    - Конфигурация Docker Compose для запуска Node-RED.
 
-7. **sensor_data.zip**:
-   - Полный дамп БД (структура и данные).
+7. **dump_DB_mysql&postgre.zip**:
+   - Полный дамп БД MySQL + PostgreSQL (структура и данные).
   
 8. **Дашборды из Superset**:
    - ids3.pdf
